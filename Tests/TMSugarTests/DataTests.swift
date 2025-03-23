@@ -221,3 +221,154 @@ final class DataTests: XCTestCase {
         XCTAssertEqual(result, "")
     }
 }
+
+final class DataJSONTests: XCTestCase {
+    
+    // MARK: - Test Constants
+    
+    private enum TestConstants {
+        // Complex JSON structures
+        static let complexJSON = """
+        {
+            "person": {
+                "name": "John",
+                "age": 30,
+                "address": {
+                    "street": "123 Main St",
+                    "city": "New York",
+                    "country": "USA"
+                },
+                "hobbies": ["reading", "swimming", "coding"]
+            }
+        }
+        """
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Compares two JSON strings by their structure
+    private func areJSONStringsEqual(_ json1: String?, _ json2: String?) -> Bool {
+        guard let json1 = json1, let json2 = json2,
+              let data1 = json1.data(using: .utf8),
+              let data2 = json2.data(using: .utf8),
+              let obj1 = try? JSONSerialization.jsonObject(with: data1) as? [String: Any],
+              let obj2 = try? JSONSerialization.jsonObject(with: data2) as? [String: Any] else {
+            return false
+        }
+        return NSDictionary(dictionary: obj1).isEqual(to: obj2)
+    }
+    
+    /// Converts JSON string to normalized dictionary
+    private func normalizedJSONObject(from jsonString: String?) -> Any? {
+        guard let jsonString = jsonString,
+              let jsonData = jsonString.data(using: .utf8) else {
+            return nil
+        }
+        return try? JSONSerialization.jsonObject(with: jsonData)
+    }
+    
+    // MARK: - Complex JSON Tests
+    
+    func testAsJSONString_WithComplexJSON_ShouldReturnFormattedString() {
+        // Given
+        let jsonData = TestConstants.complexJSON.data(using: .utf8)!
+        
+        // When
+        let result = jsonData.asJSONString
+        
+        // Then
+        XCTAssertNotNil(result)
+        
+        // Compare JSON structures instead of strings
+        let resultObj = normalizedJSONObject(from: result)
+        let expectedObj = normalizedJSONObject(from: TestConstants.complexJSON)
+        
+        XCTAssertNotNil(resultObj)
+        XCTAssertNotNil(expectedObj)
+        XCTAssertTrue(NSDictionary(dictionary: resultObj as! [String: Any])
+            .isEqual(to: expectedObj as! [String: Any]))
+    }
+    
+    // MARK: - Additional Test Cases
+    
+    func testAsJSONString_WithDifferentKeyOrder_ShouldBeEqual() {
+        // Given
+        let json1 = """
+        {
+            "person": {
+                "name": "John",
+                "age": 30
+            }
+        }
+        """
+        
+        let json2 = """
+        {
+            "person": {
+                "age": 30,
+                "name": "John"
+            }
+        }
+        """
+        
+        let data1 = json1.data(using: .utf8)!
+        
+        // When
+        let result = data1.asJSONString
+        
+        // Then
+        XCTAssertNotNil(result)
+        XCTAssertTrue(areJSONStringsEqual(result, json2))
+    }
+    
+    func testAsJSONString_WithArrayOrder_ShouldPreserveOrder() {
+        // Given
+        let jsonArray = """
+        {
+            "numbers": [1, 2, 3, 4, 5]
+        }
+        """
+        let data = jsonArray.data(using: .utf8)!
+        
+        // When
+        let result = data.asJSONString
+        
+        // Then
+        XCTAssertNotNil(result)
+        
+        // Verify array order is preserved
+        let resultObj = normalizedJSONObject(from: result) as? [String: Any]
+        let numbers = resultObj?["numbers"] as? [Int]
+        XCTAssertEqual(numbers, [1, 2, 3, 4, 5])
+    }
+    
+    func testAsJSONString_WithNestedStructures_ShouldMaintainStructure() {
+        // Given
+        let nestedJSON = """
+        {
+            "level1": {
+                "level2": {
+                    "level3": {
+                        "value": "deep"
+                    }
+                }
+            }
+        }
+        """
+        let data = nestedJSON.data(using: .utf8)!
+        
+        // When
+        let result = data.asJSONString
+        
+        // Then
+        XCTAssertNotNil(result)
+        
+        let resultObj = normalizedJSONObject(from: result)
+        let expectedObj = normalizedJSONObject(from: nestedJSON)
+        
+        XCTAssertNotNil(resultObj)
+        XCTAssertNotNil(expectedObj)
+        XCTAssertTrue(NSDictionary(dictionary: resultObj as! [String: Any])
+            .isEqual(to: expectedObj as! [String: Any]))
+    }
+}

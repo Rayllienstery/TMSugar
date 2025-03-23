@@ -199,3 +199,167 @@ final class StringTests: XCTestCase {
         XCTAssertNil(resultData)
     }
 }
+
+class FileURLConversionTests: XCTestCase {
+    
+    // MARK: - Properties
+    
+    private var temporaryDirectoryURL: URL!
+    private var testFileURL: URL!
+    
+    // MARK: - Setup & Teardown
+    
+    override func setUp() {
+        super.setUp()
+        // Create temporary directory for tests
+        temporaryDirectoryURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        
+        do {
+            try FileManager.default.createDirectory(
+                at: temporaryDirectoryURL,
+                withIntermediateDirectories: true
+            )
+        } catch {
+            XCTFail("Failed to create temporary directory: \(error)")
+        }
+    }
+    
+    override func tearDown() {
+        // Remove temporary directory and all its contents
+        do {
+            try FileManager.default.removeItem(at: temporaryDirectoryURL)
+        } catch {
+            XCTFail("Failed to clean up temporary directory: \(error)")
+        }
+        
+        super.tearDown()
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Creates a temporary file with specified name and content
+    /// - Parameters:
+    ///   - filename: Name of the file to create
+    ///   - content: Content to write to the file
+    /// - Returns: URL of the created file or nil if creation failed
+    private func createTemporaryFile(named filename: String, content: String = "Test content") -> URL? {
+        let fileURL = temporaryDirectoryURL.appendingPathComponent(filename)
+        do {
+            try content.write(to: fileURL, atomically: true, encoding: .utf8)
+            return fileURL
+        } catch {
+            XCTFail("Failed to create test file: \(error)")
+            return nil
+        }
+    }
+    
+    // MARK: - Basic Path Tests
+    
+    func testValidFilePath() {
+        // Given: A valid file path string
+        let filePath = "/path/to/file.txt"
+        
+        // When: Converting to file URL
+        let fileURL = filePath.convertToFileURL()
+        
+        // Then: URL should be created correctly
+        XCTAssertNotNil(fileURL)
+        XCTAssertEqual(fileURL?.path, filePath)
+        XCTAssertTrue(fileURL?.isFileURL ?? false)
+    }
+    
+    // MARK: - Real File System Tests
+    
+    func testExistingFile() {
+        // Given: A real file in the file system
+        guard let fileURL = createTemporaryFile(named: "test.txt") else {
+            XCTFail("Failed to create test file")
+            return
+        }
+        
+        // When: Converting the path to URL
+        let convertedURL = fileURL.path.convertToFileURL()
+        
+        // Then: Should create valid URL pointing to existing file
+        XCTAssertNotNil(convertedURL)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: convertedURL?.path ?? ""))
+        XCTAssertEqual(convertedURL?.lastPathComponent, "test.txt")
+    }
+    
+    func testFileWithUnicodeCharacters() {
+        // Given: A file with Unicode characters in its name
+        guard let fileURL = createTemporaryFile(named: "test file 🚀.txt") else {
+            XCTFail("Failed to create test file")
+            return
+        }
+        
+        // When: Converting the path to URL
+        let convertedURL = fileURL.path.convertToFileURL()
+        
+        // Then: Should handle Unicode characters correctly
+        XCTAssertNotNil(convertedURL)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: convertedURL?.path ?? ""))
+        XCTAssertEqual(convertedURL?.lastPathComponent, "test file 🚀.txt")
+    }
+    
+    func testDirectoryPath() {
+        // Given: A directory path
+        let directoryURL = temporaryDirectoryURL.appendingPathComponent("testDir")
+        
+        do {
+            try FileManager.default.createDirectory(
+                at: directoryURL,
+                withIntermediateDirectories: true
+            )
+            
+            // When: Converting directory path to URL
+            let convertedURL = directoryURL.path.convertToFileURL()
+            
+            // Then: Should create valid URL pointing to directory
+            XCTAssertNotNil(convertedURL)
+            var isDirectory: ObjCBool = false
+            let exists = FileManager.default.fileExists(
+                atPath: convertedURL?.path ?? "",
+                isDirectory: &isDirectory
+            )
+            XCTAssertTrue(exists)
+            XCTAssertTrue(isDirectory.boolValue)
+        } catch {
+            XCTFail("Failed to create test directory: \(error)")
+        }
+    }
+    
+    func testFileReadingAfterConversion() {
+        // Given: A file with specific content
+        let testContent = "Hello, World!"
+        guard let fileURL = createTemporaryFile(named: "readable.txt", content: testContent) else {
+            XCTFail("Failed to create test file")
+            return
+        }
+        
+        // When: Converting to URL and reading content
+        let convertedURL = fileURL.path.convertToFileURL()
+        
+        // Then: Should be able to read the correct content
+        XCTAssertNotNil(convertedURL)
+        do {
+            let readContent = try String(contentsOf: convertedURL!, encoding: .utf8)
+            XCTAssertEqual(readContent, testContent)
+        } catch {
+            XCTFail("Failed to read file content: \(error)")
+        }
+    }
+    
+    func testNonExistentFile() {
+        // Given: A path to non-existent file
+        let nonExistentPath = temporaryDirectoryURL.appendingPathComponent("non_existent.txt").path
+        
+        // When: Converting to URL
+        let convertedURL = nonExistentPath.convertToFileURL()
+        
+        // Then: Should create URL but file should not exist
+        XCTAssertNotNil(convertedURL)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: convertedURL?.path ?? ""))
+    }
+}
