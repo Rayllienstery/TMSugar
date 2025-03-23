@@ -44,7 +44,7 @@ extension Data {
     ///   - decoder: JSONDecoder instance
     /// - Returns: Decoded object of specified type
     /// - Throws: DataConversionError
-    func asObject<T: Decodable & Sendable>(
+    func asObject<T: Decodable>(
         of type: T.Type,
         using decoder: JSONDecoder = JSONDecoder()
     ) async throws -> T {
@@ -94,7 +94,7 @@ extension Encodable {
     /// - Throws: DataConversionError
     func toData(
         using encoder: JSONEncoder = JSONEncoder()
-    ) async throws -> Data where Self: Sendable {
+    ) async throws -> Data {
         try await withCheckedThrowingContinuation { continuation in
             do {
                 let result = try encoder.encode(self)
