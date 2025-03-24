@@ -11,7 +11,7 @@ extension Encodable {
     func asJSONString() throws -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
-        
+
         do {
             let jsonData = try encoder.encode(self)
             guard let jsonString = String(data: jsonData, encoding: .utf8) else {

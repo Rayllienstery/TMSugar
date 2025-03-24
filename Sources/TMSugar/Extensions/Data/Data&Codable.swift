@@ -26,18 +26,18 @@ extension Data {
         if let keyStrategy = keyDecodingStrategy {
             decoder.keyDecodingStrategy = keyStrategy
         }
-        
+
         if let dateStrategy = dateDecodingStrategy {
             decoder.dateDecodingStrategy = dateStrategy
         }
-        
+
         do {
             return try decoder.decode(type, from: self)
         } catch {
             throw DataConversionError.decodingFailed(error)
         }
     }
-    
+
     /// Async version of asObject
     /// - Parameters:
     ///   - type: The type to decode the data into
@@ -76,18 +76,18 @@ extension Encodable {
         if let keyStrategy = keyEncodingStrategy {
             encoder.keyEncodingStrategy = keyStrategy
         }
-        
+
         if let dateStrategy = dateEncodingStrategy {
             encoder.dateEncodingStrategy = dateStrategy
         }
-        
+
         do {
             return try encoder.encode(self)
         } catch {
             throw DataConversionError.encodingFailed(error)
         }
     }
-    
+
     /// Async version of toData
     /// - Parameter encoder: JSONEncoder instance
     /// - Returns: Encoded data

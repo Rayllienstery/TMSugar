@@ -7,13 +7,13 @@
 
 import Foundation
 
-enum DataConversionError: LocalizedError {
+public enum DataConversionError: LocalizedError {
     case invalidData
     case decodingFailed(Error)
     case encodingFailed(Error)
-    
+
     // Adding localized error description for better error handling
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidData:
             return "The provided data is invalid"
