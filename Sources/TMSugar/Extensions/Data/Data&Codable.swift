@@ -8,7 +8,7 @@
 import Foundation
 
 // MARK: - Data Extension
-extension Data {
+public extension Data {
     /// Converts Data to a specified Decodable object type
     /// - Parameters:
     ///   - type: The type to decode the data into
@@ -60,7 +60,7 @@ extension Data {
 }
 
 // MARK: - Encodable Extension
-extension Encodable {
+public extension Encodable {
     /// Converts the Encodable object to Data
     /// - Parameters:
     ///   - encoder: JSONEncoder instance

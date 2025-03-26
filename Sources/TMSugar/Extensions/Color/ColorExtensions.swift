@@ -39,7 +39,7 @@ public extension Color {
     }
 }
 
-extension [String: Double] {
+public extension [String: Double] {
     /// Converts a dictionary with RGBA components to a Color object
     /// - Returns: Color object created from dictionary components
     /// - Note: If any component is missing in the dictionary:
